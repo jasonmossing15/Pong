@@ -64,17 +64,31 @@ architecture mossing of atlys_lab_video is
            column : out  unsigned(10 downto 0));
 	end component;
 	
+	component pong_control
+    Port ( clk : in  STD_LOGIC;
+           reset : in  STD_LOGIC;
+           up : in  STD_LOGIC;
+           down : in  STD_LOGIC;
+           v_completed : in  STD_LOGIC;
+           ball_x : out  unsigned(10 downto 0);
+           ball_y : out  unsigned(10 downto 0);
+           paddle_y : out  unsigned(10 downto 0));
+	end component;
+	
 	component pixel_gen
     port ( row      : in unsigned(10 downto 0);
            column   : in unsigned(10 downto 0);
            blank    : in std_logic;
+			  ball_x   : in unsigned(10 downto 0);
+           ball_y   : in unsigned(10 downto 0);
+           paddle_y : in unsigned(10 downto 0);
            r        : out std_logic_vector(7 downto 0);
            g        : out std_logic_vector(7 downto 0);
            b        : out std_logic_vector(7 downto 0));
 	end component;
 	 
-	 signal row_sig, column_sig : unsigned(10 downto 0);
-	 signal blank_sig, h_sync_sig, v_sync_sig, clock_s, blue_s, green_s, red_s, serialize_clk_n, serialize_clk, pixel_clk : std_logic;
+	 signal row_sig, column_sig, ball_xs, ball_ys, paddle_ys : unsigned(10 downto 0);
+	 signal blank_sig, h_sync_sig, v_sync_sig, clock_s, blue_s, green_s, red_s, serialize_clk_n, serialize_clk, pixel_clk, v_completed : std_logic;
 	 signal red, green, blue : std_logic_vector(7 downto 0);
 begin
 
@@ -122,10 +136,22 @@ begin
          reset => reset,
          h_sync => h_sync_sig,
          v_sync => v_sync_sig,
-         v_completed => open,
+         v_completed => v_completed,
          blank => blank_sig,
          row => row_sig,
          column => column_sig);
+
+	 pong : pong_control
+    Port map ( clk => clk,
+           reset => reset,
+           up => up,
+           down => down,
+           v_completed => v_completed,
+           ball_x => ball_xs,
+           ball_y => ball_ys,
+           paddle_y => paddle_ys
+			  );
+
 
     -- Pixel generator component instantiation
 		pix_gen : pixel_gen
@@ -133,6 +159,9 @@ begin
 				row => row_sig,
 				column => column_sig,
 				blank  => blank_sig,
+				ball_x => ball_xs,
+				ball_y => ball_ys,
+				paddle_y => paddle_ys,
 				r => red,
 				g => green,
 				b => blue
