@@ -142,7 +142,7 @@ begin
          column => column_sig);
 
 	 pong : pong_control
-    Port map ( clk => clk,
+    Port map ( clk => pixel_clk,
            reset => reset,
            up => up,
            down => down,

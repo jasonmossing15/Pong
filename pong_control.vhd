@@ -50,19 +50,90 @@ architecture Behavioral of pong_control is
 	signal dx, dy, dx_reg, dy_reg : signed(10 downto 0);
 	
 	
-	type paddle_states is (start, p_up, p_down, idle, debounce, move);
+	type paddle_states is (p_up, p_down, idle, debounceup, debouncedown, debouncedup, debounceddown);
 	constant direction : integer := 0;
 	signal p_state_reg, p_state_next : paddle_states;
-	signal dcount_reg, dcount_next, paddle_y_temp, paddle : unsigned(10 downto 0);
+	signal paddle_y_temp, paddle : unsigned(10 downto 0);
+	signal dcount_reg, dcount_next : integer;
 	signal direction_temp : integer;
 	
 begin
 
-
-	
-	
-
 --Count State Register
+	process(clk, reset)
+	begin
+		if reset = '1' then
+			dcount_reg <= 0;
+		elsif rising_edge(clk) then
+			dcount_reg <= dcount_next;
+		end if;
+	end process;
+
+dcount_next <= dcount_reg + 1 when p_state_reg = debounceup or p_state_reg = debouncedown else
+				  0;
+	
+	--State Register
+	process(clk, reset)
+	begin
+		if reset = '1' then
+			p_state_reg <= idle;
+		elsif rising_edge(clk) then
+			p_state_reg <= p_state_next;
+		end if;
+	end process;
+	
+--Paddle Next logic
+	process(p_state_reg, up, down, dcount_reg)
+	begin
+		p_state_next <= p_state_reg;
+		
+		case p_state_reg is
+			when p_up =>
+				p_state_next <= debounceup;
+			when p_down =>
+				p_state_next <= debouncedown;
+			when debounceup =>
+				if dcount_reg > 4 then
+					p_state_next <= debouncedup;
+				end if;
+			when debouncedown =>
+				if dcount_reg > 4 then
+					p_state_next <= debounceddown;
+				end if;
+			when debouncedup =>
+				p_state_next <= idle;
+			when debounceddown =>
+				p_state_next <= idle;
+			when idle =>
+				if (up = '1') then
+					p_state_next <= p_up;
+				elsif (down= '1') then
+					p_state_next <= p_down;
+				end if;
+		end case;
+	end process;
+
+
+					
+--Paddle output logic
+	process(p_state_reg)
+	begin
+		paddle <= paddle_y_temp;
+		case p_state_reg is
+			when p_up =>
+			when p_down =>
+			when debounceup =>
+			when debouncedown =>
+			when debouncedup =>
+				paddle <= paddle_y_temp + to_unsigned(5,11);
+			when debounceddown =>
+				paddle <= paddle_y_temp - to_unsigned(5,11);
+			when idle =>
+		end case;
+	end process;
+	
+
+--output Register
 	process(clk, reset)
 	begin
 		if reset = '1' then
@@ -71,10 +142,10 @@ begin
 			paddle_y_temp <= paddle;
 		end if;
 	end process;
-	
-paddle <= (paddle_y_temp + 5) when rising_edge(up) and (paddle_y_temp > 0) else
-			 (paddle_y_temp - 5) when rising_edge(down) and (paddle_y_temp < 470) else
-			 paddle_y_temp;
+--	
+--paddle <= (paddle_y_temp + 5) when up = '1' and (paddle_y_temp > 0) else
+--			 (paddle_y_temp - 5) when down = '1' and (paddle_y_temp < 470) else
+--			 paddle_y_temp;
 
 paddle_y <= paddle_y_temp;
 
@@ -197,83 +268,7 @@ ball_y <= to_unsigned(400,11);
 
 
 	
-----Count State Register
---	process(clk, reset)
---	begin
---		if reset = '1' then
---			dcount_reg <= 0;
---		elsif rising_edge(clk) then
---			dcount_reg <= dcount_next;
---		end if;
---	end process;
---
---dcount_next <= dcount_reg + 1 when p_state_reg = debounce else
---				  0;
---	
---	--State Register
---	process(clk, reset)
---	begin
---		if reset = '1' then
---			p_state_reg <= start;
---		elsif rising_edge(clk) then
---			p_state_reg <= p_state_next;
---		end if;
---	end process;
---	
-----Paddle Next logic
---	process(p_state_reg, up, down, dcount_reg)
---	begin
---		p_state_next <= p_state_reg;
---		
---		case p_state_reg is
---			when start =>
---				p_state_next <= idle;
---			when up =>
---				p_state_next <= debounce;
---			when down =>
---				p_state_next <= debounce;
---			when debounce =>
---				if dcount_reg > 4 then
---					p_state_next <= move;
---				end if;
---			when move =>
---				p_state_next <= idle;
---			when idle =>
---				if (up = '1') then
---					p_state_next <= up;
---				elsif (down= '1') then
---					p_state_next <= down;
---				end if;
---		end case;
---	end process;
---
---
---					
-----Paddle output logic
---	process(p_state_reg)
---	begin
---		paddle_y <= paddle_y_temp;
---		direction <= direction_temp;
---		case p_state_reg is
---			when start =>
---				paddle_y_temp <= 240;
---			when up =>
---				direction <= 1;
---			when down =>
---				direction <= 2;
---			when debounce =>
---			when move =>
---				if direction = 1 then
---					paddle_y <= paddle_y_temp + 5;
---					direction <= 0;
---				elsif direction = 2 then
---					paddle_y <= paddle_y_temp - 5;
---					direction <= 0;
---				end if;
---			when idle =>
---				paddle_y <= paddle_y_temp;
---		end case;
---	end process;
+
 			
 
 end Behavioral;
