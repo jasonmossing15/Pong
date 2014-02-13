@@ -53,7 +53,7 @@ architecture Behavioral of pong_control is
 	type paddle_states is (idle, p_up, p_down, debounceup, debouncedown, debouncedup, debounceddown);
 	signal p_state_reg, p_state_next : paddle_states;
 	signal paddle_y_temp, paddle : unsigned(10 downto 0);
-	signal dcount_reg, dcount_next : unsigned(10 downto 0);
+	signal dcount_reg, dcount_next : unsigned(13 downto 0);
 	
 begin
 
@@ -63,14 +63,14 @@ begin
 	process(clk, reset)
 	begin
 		if (reset = '1') then
-			dcount_reg <= to_unsigned(0,11);
+			dcount_reg <= to_unsigned(0,14);
 		elsif rising_edge(clk) then
 			dcount_reg <= dcount_next;
 		end if;
 	end process;
 
 dcount_next <= dcount_reg + 1 when p_state_reg = debounceup or p_state_reg = debouncedown else
-				  to_unsigned(0,11);
+				  to_unsigned(0,14);
 	
 --	State Register
 	process(clk, reset)
@@ -93,11 +93,11 @@ dcount_next <= dcount_reg + 1 when p_state_reg = debounceup or p_state_reg = deb
 			when p_down =>
 				p_state_next <= debouncedown;
 			when debounceup =>
-				if dcount_reg > 4 then
+				if dcount_reg > 11000 then
 					p_state_next <= debouncedup;
 				end if;
 			when debouncedown =>
-				if dcount_reg > 4 then
+				if dcount_reg > 11000 then
 					p_state_next <= debounceddown;
 				end if;
 			when debouncedup =>
@@ -125,12 +125,12 @@ dcount_next <= dcount_reg + 1 when p_state_reg = debounceup or p_state_reg = deb
 			when debounceup =>
 			when debouncedown =>
 			when debouncedup =>
-				if (paddle_y_temp < 480 - paddle_height) then
-					paddle <= paddle_y_temp + to_unsigned(5,11);
+				if (paddle_y_temp > 0) then
+					paddle <= paddle_y_temp - to_unsigned(1,11);
 				end if;
 			when debounceddown =>
-				if (paddle_y_temp > 0) then
-					paddle <= paddle_y_temp - to_unsigned(5,11);
+				if (paddle_y_temp < 480 - paddle_height) then
+					paddle <= paddle_y_temp + to_unsigned(1,11);
 				end if;
 			when idle =>
 		end case;
@@ -146,9 +146,6 @@ dcount_next <= dcount_reg + 1 when p_state_reg = debounceup or p_state_reg = deb
 		end if;
 	end process;
 	
---paddle <= (paddle_y_temp + 1) when up = '1' and (paddle_y_temp > 0) else
---			 (paddle_y_temp - 1) when down = '1' and (paddle_y_temp < 480 - paddle_height) else
---			 paddle_y_temp;
 
 paddle_y <= paddle_y_temp;
 
@@ -193,12 +190,12 @@ count_next <= count_reg + to_unsigned(1,11) when count_reg < speed and v_complet
 		
 		 if(ball_x_reg >= 635) then
 			hitright <= '1';
-		elsif (ball_x_reg <=( paddle_space + paddle_width) and (ball_y_reg <= paddle_y_temp or ball_y_reg >= (paddle_y_temp + paddle_height))) then
+		elsif (ball_x_reg <=( paddle_space + paddle_width) and (ball_y_reg >= paddle_y_temp and ball_y_reg <= (paddle_y_temp + paddle_height))) then
 			hitpaddle <= '1';
-		elsif ( ball_y_reg <= 0) then
-			hitbottom <= '1';
-		elsif (ball_y_reg >= 475) then
+		elsif ( ball_y_reg <= 5) then
 			hittop <= '1';
+		elsif (ball_y_reg >= 475) then
+			hitbottom <= '1';
 		elsif (ball_x_reg <= 0) then
 			hitleft <= '1';
 		end if;
