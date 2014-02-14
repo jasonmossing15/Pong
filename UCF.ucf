@@ -7,6 +7,8 @@ NET "reset" LOC = "F5" | IOSTANDARD = LVCMOS33;
 NET "up" LOC = "N4";
 NET "down" LOC = "P3";
 
+NET "speed_switch" LOC = "E4";
+
 NET "TMDS(0)"      LOC = "D8" | IOSTANDARD = TMDS_33 ; # Blue
 NET "TMDSB(0)"  LOC = "C8" | IOSTANDARD = TMDS_33 ;
 NET "TMDS(1)"      LOC = "C7" | IOSTANDARD = TMDS_33 ; # Red
