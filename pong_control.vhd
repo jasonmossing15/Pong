@@ -48,13 +48,14 @@ architecture Behavioral of pong_control is
 	signal count_reg, count_next, ball_x_reg, ball_x_next, ball_y_reg, ball_y_next : unsigned(10 downto 0);
 	signal speed : unsigned(10 downto 0);
 	signal hitbottom, hittop, hitleft, hitright, hitpaddle : std_logic;
+	signal corner_up, mid_up, mid, mid_down, corner_down, corner_up_temp, mid_up_temp, mid_temp, mid_down_temp, corner_down_temp : std_logic;
 	signal dx, dy, dx_reg, dy_reg : std_logic;
 	
 	
 	type paddle_states is (idle, p_up, p_down, debounceup, debouncedown, debouncedup, debounceddown);
 	signal p_state_reg, p_state_next : paddle_states;
 	signal paddle_y_temp, paddle : unsigned(10 downto 0);
-	signal dcount_reg, dcount_next : unsigned(14 downto 0);
+	signal dcount_reg, dcount_next : unsigned(15 downto 0);
 	
 begin
 
@@ -84,23 +85,79 @@ count_next <= count_reg + to_unsigned(1,11) when count_reg < speed and v_complet
 		end if;
 	end process;
 	
+--Hot zone register
+	process(clk, reset)
+	begin
+		if(reset = '1') then
+			corner_up <= '0';
+			mid_up <= '0';
+			mid <= '0';
+			mid_down <= '0';
+			corner_down <= '0';
+		elsif rising_edge(clk) then
+			corner_up <= corner_up_temp;
+			mid_up <= mid_up_temp;
+			mid <= mid_temp;
+			mid_down <= mid_down_temp;
+			corner_down <= corner_down_temp;
+		end if;
+	end process;
+	
 --check boundaries
-	process(ball_x_reg, ball_y_reg, paddle_y_temp)
+	process(ball_x_reg, ball_y_reg, paddle_y_temp, corner_up, mid_up, mid, mid_down, corner_down)
 	begin
 		hitbottom <= '0';
 		hittop <= '0';
 		hitleft <= '0';
 		hitright <= '0';
-		hitpaddle <= '0';
+		hitpaddle <= '0'; 
+		
+		corner_up_temp <= corner_up;
+		mid_up_temp <= mid_up;
+		mid_temp <= mid;
+		mid_down_temp <= mid_down;
+		corner_down_temp <= corner_down;
+		
 		
 		 if(ball_x_reg >= 635) then
 			hitright <= '1';
+		
 		elsif ((ball_x_reg <= (paddle_space + paddle_width)) and (ball_y_reg >= paddle_y_temp and ball_y_reg <= (paddle_y_temp + paddle_height))) then
+			if (ball_y_reg >= paddle_y_temp and ball_y_reg <= (paddle_y_temp + paddle_height/5)) then
+				corner_up_temp <= '1';
+			
+			elsif(ball_y_reg >= (paddle_y_temp + paddle_height/5) and ball_y_reg <= (paddle_y_temp + 2*paddle_height/5)) then
+				mid_up_temp <= '1';
+			
+			elsif(ball_y_reg >= (paddle_y_temp + 2*paddle_height/5) and ball_y_reg <= (paddle_y_temp + 3*paddle_height/5)) then
+				mid_temp <= '1';
+				
+			elsif(ball_y_reg >= (paddle_y_temp + 3*paddle_height/5) and ball_y_reg <= (paddle_y_temp + 4*paddle_height/5)) then
+				mid_down_temp <= '1';
+				
+			else
+				corner_down_temp <= '1';
+				
+			end if;
+			
 			hitpaddle <= '1';
 		elsif ( ball_y_reg <= 5) then
 			hittop <= '1';
+			
+			corner_up_temp <= '0';
+			mid_up_temp <= '0';
+			mid_temp <= '0';
+			mid_down_temp <= '0';
+			corner_down_temp <= '0';
+			
 		elsif (ball_y_reg >= 475) then
 			hitbottom <= '1';
+			
+			corner_up_temp <= '0';
+			mid_up_temp <= '0';
+			mid_temp <= '0';
+			mid_down_temp <= '0';
+			corner_down_temp <= '0';
 		elsif (ball_x_reg < paddle_space) then
 			hitleft <= '1';
 		end if;
@@ -142,7 +199,7 @@ count_next <= count_reg + to_unsigned(1,11) when count_reg < speed and v_complet
 	end process;
 	
 --ball output
-	process(b_state_reg, count_reg, ball_x_reg, ball_y_reg, dx_reg, dy_reg, speed)
+	process(b_state_reg, count_reg, ball_x_reg, ball_y_reg, dx_reg, dy_reg, speed, corner_up, mid_up, mid, mid_down, corner_down)
 	begin
 		ball_x_next <= ball_x_reg;
 		ball_y_next <= ball_y_reg;
@@ -158,7 +215,17 @@ count_next <= count_reg + to_unsigned(1,11) when count_reg < speed and v_complet
 					ball_x_next <= ball_x_reg - to_unsigned(2,11);
 				end if;
 				
-				if( dy_reg = '1') then
+				if(corner_up = '1') then
+					ball_y_next <= ball_y_reg - to_unsigned(4,11);
+				elsif(mid_up = '1') then
+					ball_y_next <= ball_y_reg - to_unsigned(1,11);
+				elsif(mid = '1') then
+					
+				elsif(mid_down = '1') then
+					ball_y_next <= ball_y_reg + to_unsigned(1,11);
+				elsif(corner_down = '1') then
+					ball_y_next <= ball_y_reg + to_unsigned(4,11);
+				elsif( dy_reg = '1') then
 					ball_y_next <= ball_y_reg - to_unsigned(2,11);
 				else
 					ball_y_next <= ball_y_reg + to_unsigned(2,11);
@@ -207,14 +274,14 @@ speed <= to_unsigned(700,11) when switch = '0' else
 	process(clk, reset)
 	begin
 		if (reset = '1') then
-			dcount_reg <= to_unsigned(0,15);
+			dcount_reg <= to_unsigned(0,16);
 		elsif rising_edge(clk) then
 			dcount_reg <= dcount_next;
 		end if;
 	end process;
 
 dcount_next <= dcount_reg + 1 when p_state_reg = debounceup or p_state_reg = debouncedown else
-				  to_unsigned(0,15);
+				  to_unsigned(0,16);
 	
 --	State Register
 	process(clk, reset)
@@ -237,11 +304,11 @@ dcount_next <= dcount_reg + 1 when p_state_reg = debounceup or p_state_reg = deb
 			when p_down =>
 				p_state_next <= debouncedown;
 			when debounceup =>
-				if dcount_reg > 32000 then
+				if dcount_reg > 45000 then
 					p_state_next <= debouncedup;
 				end if;
 			when debouncedown =>
-				if dcount_reg > 32000 then
+				if dcount_reg > 45000 then
 					p_state_next <= debounceddown;
 				end if;
 			when debouncedup =>
