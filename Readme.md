@@ -7,7 +7,7 @@ The purpose of this lab is to create a working Pong game to be displayed on a co
 This program was implemented by the creation of two different state machines in order to control the paddle and the ball. The paddle state machine delt with the motion and debouncing of the buttons. Without the debouncing portion the paddle flipped from one edge of the screen to the other. 
 The following is the state machine diagram for the paddle:
 
-INSERT PADDLE FSM DIAGRAM HERE
+![Paddle State Diagram](paddleFSM.jpg)
 
 The paddle state machine had two components, the state machine itself and a check to see if the ball had hit any of the walls or paddle. The following are the if and else if statements checking to see if a boundary was hit:
 ```
@@ -27,7 +27,7 @@ end if;
 
 This check was used to move from state to state. The following is the state_diagram for the ball movement. Note that the "hot zones" of A functionality are not added, as well as the switch for B functionality.
 
-BALL MOVEMENT FSM DIAGRAM GOES HERE
+![Ball Movement state diagram](ballFSM.jpg)
 
 B functionality wasthe addition of a switch in order to change the speed. This was just a simple addition of a switch and a simple combinational statement:
 
