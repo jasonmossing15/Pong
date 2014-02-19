@@ -1,21 +1,9 @@
 ----------------------------------------------------------------------------------
 -- Company: ECE383
--- Engineer: Jason Mossing
--- 
+-- Engineer: Jason Mossing 
 -- Create Date:    15:22:52 01/28/2014 
 -- Design Name: 	 VGA Synchronization
 -- Module Name:    atlys_lab_video - mossing 
--- Project Name: 
--- Target Devices: 
--- Tool versions: 
--- Description: 
---
--- Dependencies: 
---
--- Revision: 
--- Revision 0.01 - File Created
--- Additional Comments: 
---
 ----------------------------------------------------------------------------------
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
@@ -66,6 +54,8 @@ architecture mossing of atlys_lab_video is
 	end component;
 	
 	component pong_control
+	 Generic ( screen_width : natural;
+					screen_height : natural);
     Port ( clk : in  STD_LOGIC;
            reset : in  STD_LOGIC;
            up : in  STD_LOGIC;
@@ -144,16 +134,18 @@ begin
          column => column_sig);
 
 	 pong : pong_control
-    Port map ( clk => pixel_clk,
-           reset => reset,
-           up => up,
-           down => down,
-			  switch => speed_switch,
-           v_completed => v_completed,
-           ball_x => ball_xs,
-           ball_y => ball_ys,
-           paddle_y => paddle_ys
-			  );
+		 generic map ( screen_width => 640,
+							screen_height => 480)
+		 Port map ( clk => pixel_clk,
+				  reset => reset,
+				  up => up,
+				  down => down,
+				  switch => speed_switch,
+				  v_completed => v_completed,
+				  ball_x => ball_xs,
+				  ball_y => ball_ys,
+				  paddle_y => paddle_ys
+				  );
 
 
     -- Pixel generator component instantiation

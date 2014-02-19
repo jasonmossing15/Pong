@@ -1,20 +1,6 @@
 ----------------------------------------------------------------------------------
--- Company: 
--- Engineer: 
--- 
--- Create Date:    09:39:08 02/10/2014 
--- Design Name: 
+-- Engineer: Jason Mossing
 -- Module Name:    pong_control - Behavioral 
--- Project Name: 
--- Target Devices: 
--- Tool versions: 
--- Description: 
---
--- Dependencies: 
---
--- Revision: 
--- Revision 0.01 - File Created
--- Additional Comments: 
 --
 ----------------------------------------------------------------------------------
 library IEEE;
@@ -31,6 +17,8 @@ use work.Constants.all;
 --use UNISIM.VComponents.all;
 
 entity pong_control is
+	Generic (screen_width : natural;
+				screen_height : natural);
     Port ( clk : in  STD_LOGIC;
            reset : in  STD_LOGIC;
            up : in  STD_LOGIC;
